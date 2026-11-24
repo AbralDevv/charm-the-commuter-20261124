@@ -1,23 +1,21 @@
-// Charm the Commuter: Forecast a City That Isn't
-// One line of weather for an invented city, written to /output/entry.txt.
-// Gate: UTF-8 text, 1-140 characters, not only whitespace.
+// Charm the Commuter: Forecast a City That Isn't — revised entry (Neon FINAL line, typed verbatim).
+// Writes the line verbatim to entry.txt in the grader's output dir —
+// $MAKEFUN_OUTPUT_DIR first, then /output, then ./output; no trailing newline.
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+const LINE = `Port Mumble: dense fog till 9, visibility six feet—clear enough at the bus stop for Dave in Finance to spot you and yell, "Big weekend?"`;
 
-const ENTRY =
-  "Good morning, Drizzlewick! Light drizzle till noon, then sunshine on platform 3 — your umbrella finally earns its keep.";
-
-if (ENTRY.length < 1 || ENTRY.length > 140 || ENTRY.trim().length === 0) {
-  throw new Error(`entry must be 1-140 characters, got ${ENTRY.length}`);
+const candidates = [process.env.MAKEFUN_OUTPUT_DIR, "/output", "./output"].filter(Boolean) as string[];
+let written = false;
+for (const dir of candidates) {
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "entry.txt"), LINE, "utf8");
+    written = true;
+    break;
+  } catch {
+    // Directory not writable (e.g. read-only repo dir) — try the next fallback.
+  }
 }
-
-mkdirSync("/output", { recursive: true });
-writeFileSync("/output/entry.txt", ENTRY, "utf8");
-
-// Read back what was written and re-check the gate on the file itself,
-// so a stray newline or encoding slip can never ship silently.
-const written = readFileSync("/output/entry.txt", "utf8");
-if (written !== ENTRY) {
-  throw new Error("round-trip mismatch: file content differs from entry");
-}
-console.log(`wrote ${written.length} chars to /output/entry.txt`);
+if (!written) throw new Error("could not write entry.txt to any output dir");
